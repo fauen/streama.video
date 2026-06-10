@@ -1,0 +1,5 @@
+name = "steama-video"
+pages_build_output_dir = "."
+
+[functions]
+  directory = "functions"

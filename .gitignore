@@ -1,0 +1,16 @@
+# Local test files with API keys - NEVER commit these
+/test.html
+
+# IDE/Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Node.js (if used later)
+node_modules/
+package-lock.json

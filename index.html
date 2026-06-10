@@ -255,7 +255,6 @@
     </div>
 
     <script>
-        const API_KEY = 'YOUR_API_KEY'; // Replace with your actual API key
         const API_BASE = '/api/proxy/v1';
         
 
@@ -283,11 +282,7 @@
                     search_value: query
                 });
                 
-                const response = await fetch(`${API_BASE}/search/?${params}`, {
-                    headers: {
-                        'X-API-Key': API_KEY
-                    }
-                });
+                const response = await fetch(`${API_BASE}/search/?${params}`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -334,11 +329,7 @@
         
         async function getSourcesForTitle(titleId, country) {
             try {
-                const response = await fetch(`${API_BASE}/title/${titleId}/sources/?regions=${country}`, {
-                    headers: {
-                        'X-API-Key': API_KEY
-                    }
-                });
+                const response = await fetch(`${API_BASE}/title/${titleId}/sources/?regions=${country}`);
                 
                 if (!response.ok) {
                     if (response.status === 404) {

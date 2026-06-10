@@ -201,6 +201,9 @@
                 >
                 <select id="countrySelect">
                     <option value="">Select Country</option>
+                    <option value="US">United States</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="SE">Sweden</option>
                 </select>
             </div>
             <button onclick="search()">Search</button>
@@ -213,37 +216,7 @@
         const API_KEY = 'YOUR_API_KEY'; // Replace with your actual API key
         const API_BASE = 'https://api.watchmode.com/v1';
         
-        let regions = [];
-        
-        // Load regions on page load
-        async function loadRegions() {
-            try {
-                const response = await fetch(`${API_BASE}/regions/`, {
-                    headers: {
-                        'X-API-Key': API_KEY
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                regions = data;
-                
-                // Populate country dropdown
-                const countrySelect = document.getElementById('countrySelect');
-                data.sort((a, b) => a.name.localeCompare(b.name)).forEach(region => {
-                    const option = document.createElement('option');
-                    option.value = region.country;
-                    option.textContent = region.name;
-                    countrySelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading regions:', error);
-                showError('Failed to load countries. Please check your API key and connection.');
-            }
-        }
+
         
         async function search() {
             const query = document.getElementById('searchInput').value.trim();
@@ -378,9 +351,6 @@
                 search();
             }
         });
-        
-        // Load regions when page loads
-        loadRegions();
     </script>
 </body>
 </html>

@@ -121,9 +121,14 @@
 
         .result-item.unavailable {
             opacity: 0.6;
-            padding: 0.75rem;
+            padding: 0.5rem;
             transform: scale(0.95);
             border-left-color: var(--fg-dim);
+        }
+
+        .result-item.unavailable .result-meta,
+        .result-item.unavailable .sources {
+            display: none;
         }
 
         .result-item.unavailable:hover {

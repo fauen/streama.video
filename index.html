@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Search</title>
+    <style>
+        :root {
+            --bg: #1d2021;
+            --fg: #ebdbb2;
+            --fg-dim: #a89984;
+            --red: #fb4934;
+            --green: #b8bb26;
+            --yellow: #fabd2f;
+            --blue: #83a598;
+            --purple: #d3869b;
+            --bg-alt: #282828;
+            --border: #3c3836;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--fg);
+        }
+
+        .search-box {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        input[type="text"], select {
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-alt);
+            color: var(--fg);
+            font-size: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--blue);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--fg-dim);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--blue);
+            color: var(--bg);
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--green);
+        }
+
+        button:active {
+            background-color: var(--yellow);
+        }
+
+        .results {
+            margin-top: 1rem;
+        }
+
+        .result-item {
+            background-color: var(--bg-alt);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--blue);
+        }
+
+        .result-item:hover {
+            border-left-color: var(--green);
+        }
+
+        .result-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--fg);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--fg-dim);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--fg-dim);
+        }
+
+        .error {
+            color: var(--red);
+            text-align: center;
+            padding: 1rem;
+            background-color: rgba(251, 73, 52, 0.1);
+            border-radius: 4px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 2rem;
+            color: var(--fg-dim);
+        }
+
+        @media (max-width: 600px) {
+            .input-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stream Search</h1>
+        
+        <div class="search-box">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search for a movie or TV show..."
+                    autocomplete="off"
+                >
+                <select id="countrySelect">
+                    <option value="">Select Country</option>
+                </select>
+            </div>
+            <button onclick="search()">Search</button>
+        </div>
+        
+        <div id="resultsContainer" class="results"></div>
+    </div>
+
+    <script>
+        const API_KEY = 'YOUR_API_KEY'; // Replace with your actual API key
+        const API_BASE = 'https://api.watchmode.com/v1';
+        
+        let regions = [];
+        
+        // Load regions on page load
+        async function loadRegions() {
+            try {
+                const response = await fetch(`${API_BASE}/regions/`, {
+                    headers: {
+                        'X-API-Key': API_KEY
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                regions = data;
+                
+                // Populate country dropdown
+                const countrySelect = document.getElementById('countrySelect');
+                data.sort((a, b) => a.name.localeCompare(b.name)).forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region.country;
+                    option.textContent = region.name;
+                    countrySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading regions:', error);
+                showError('Failed to load countries. Please check your API key and connection.');
+            }
+        }
+        
+        async function search() {
+            const query = document.getElementById('searchInput').value.trim();
+            const country = document.getElementById('countrySelect').value;
+            
+            if (!query) {
+                showError('Please enter a search term');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                // Build search URL
+                const params = new URLSearchParams({
+                    search_field: 'name',
+                    search_value: query
+                });
+                
+                const response = await fetch(`${API_BASE}/search/?${params}`, {
+                    headers: {
+                        'X-API-Key': API_KEY
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Error searching:', error);
+                showError('Failed to search. Please check your API key and try again.');
+            }
+        }
+        
+        function displayResults(data) {
+            const container = document.getElementById('resultsContainer');
+            const country = document.getElementById('countrySelect').value;
+            
+            if (!data.title_results || data.title_results.length === 0) {
+                container.innerHTML = '<div class="empty">No results found</div>';
+                return;
+            }
+            
+            // Filter by country if selected
+            const results = country 
+                ? data.title_results.filter(t => t.imdb_id) // We'll check availability per title
+                : data.title_results;
+            
+            if (results.length === 0) {
+                container.innerHTML = '<div class="empty">No results found for this country</div>';
+                return;
+            }
+            
+            // Display up to 10 results
+            const limitedResults = results.slice(0, 10);
+            
+            container.innerHTML = limitedResults.map(title => `
+                <div class="result-item">
+                    <div class="result-title">${escapeHtml(title.name)} ${title.year ? `(${title.year})` : ''}</div>
+                    <div class="result-meta">
+                        <span>${title.type ? title.type.replace('_', ' ') : 'N/A'}</span>
+                        ${title.imdb_id ? `<span>IMDb: ${title.imdb_id}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showLoading() {
+            document.getElementById('resultsContainer').innerHTML = 
+                '<div class="loading">Searching...</div>';
+        }
+        
+        function showError(message) {
+            document.getElementById('resultsContainer').innerHTML = 
+                `<div class="error">${escapeHtml(message)}</div>`;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Allow Enter key to trigger search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                search();
+            }
+        });
+        
+        // Load regions when page loads
+        loadRegions();
+    </script>
+</body>
+</html>

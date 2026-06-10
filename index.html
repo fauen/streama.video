@@ -152,6 +152,30 @@
             color: var(--fg-dim);
         }
 
+        .sources {
+            margin-top: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            background-color: var(--bg);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--fg);
+            border: 1px solid var(--border);
+        }
+
+        .source-badge.sub { border-color: var(--green); color: var(--green); }
+        .source-badge.purchase { border-color: var(--yellow); color: var(--yellow); }
+        .source-badge.free { border-color: var(--blue); color: var(--blue); }
+        .source-badge.tve { border-color: var(--purple); color: var(--purple); }
+
         @media (max-width: 600px) {
             .input-group {
                 flex-direction: column;
@@ -230,6 +254,11 @@
                 return;
             }
             
+            if (!country) {
+                showError('Please select a country');
+                return;
+            }
+            
             showLoading();
             
             try {
@@ -250,49 +279,86 @@
                 }
                 
                 const data = await response.json();
-                displayResults(data);
+                await displayResultsWithSources(data, country);
             } catch (error) {
                 console.error('Error searching:', error);
                 showError('Failed to search. Please check your API key and try again.');
             }
         }
         
-        function displayResults(data) {
+        async function displayResultsWithSources(data, country) {
             const container = document.getElementById('resultsContainer');
-            const country = document.getElementById('countrySelect').value;
             
             if (!data.title_results || data.title_results.length === 0) {
                 container.innerHTML = '<div class="empty">No results found</div>';
                 return;
             }
             
-            // Filter by country if selected
-            const results = country 
-                ? data.title_results.filter(t => t.imdb_id) // We'll check availability per title
-                : data.title_results;
-            
-            if (results.length === 0) {
-                container.innerHTML = '<div class="empty">No results found for this country</div>';
-                return;
-            }
-            
             // Display up to 10 results
-            const limitedResults = results.slice(0, 10);
+            const limitedResults = data.title_results.slice(0, 10);
             
-            container.innerHTML = limitedResults.map(title => `
+            // Fetch sources for all titles in parallel
+            const titlesWithSources = await Promise.all(
+                limitedResults.map(async (title) => {
+                    const sources = await getSourcesForTitle(title.id, country);
+                    return { ...title, sources };
+                })
+            );
+            
+            container.innerHTML = titlesWithSources.map(title => `
                 <div class="result-item">
                     <div class="result-title">${escapeHtml(title.name)} ${title.year ? `(${title.year})` : ''}</div>
                     <div class="result-meta">
                         <span>${title.type ? title.type.replace('_', ' ') : 'N/A'}</span>
                         ${title.imdb_id ? `<span>IMDb: ${title.imdb_id}</span>` : ''}
                     </div>
+                    ${renderSources(title.sources, country)}
                 </div>
             `).join('');
         }
         
+        async function getSourcesForTitle(titleId, country) {
+            try {
+                const response = await fetch(`${API_BASE}/title/${titleId}/sources/?regions=${country}`, {
+                    headers: {
+                        'X-API-Key': API_KEY
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        return [];
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data || [];
+            } catch (error) {
+                console.error(`Error fetching sources for title ${titleId}:`, error);
+                return [];
+            }
+        }
+        
+        function renderSources(sources, country) {
+            if (!sources || sources.length === 0) {
+                return '<div class="sources"><span class="empty" style="font-size: 0.875rem;">Not available in selected country</span></div>';
+            }
+            
+            return `
+                <div class="sources">
+                    ${sources.map(source => `
+                        <span class="source-badge ${source.type}" title="${escapeHtml(source.name)} - ${source.type}">
+                            ${escapeHtml(source.name)}
+                        </span>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
         function showLoading() {
             document.getElementById('resultsContainer').innerHTML = 
-                '<div class="loading">Searching...</div>';
+                '<div class="loading">Searching and checking availability...</div>';
         }
         
         function showError(message) {

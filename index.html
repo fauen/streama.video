@@ -112,10 +112,23 @@
             padding: 1rem;
             margin-bottom: 0.75rem;
             border-left: 3px solid var(--blue);
+            transition: all 0.2s ease;
         }
 
         .result-item:hover {
             border-left-color: var(--green);
+        }
+
+        .result-item.unavailable {
+            opacity: 0.6;
+            padding: 0.75rem;
+            transform: scale(0.95);
+            border-left-color: var(--fg-dim);
+        }
+
+        .result-item.unavailable:hover {
+            opacity: 0.8;
+            transform: scale(0.98);
         }
 
         .result-title {
@@ -279,7 +292,7 @@
             );
             
             container.innerHTML = titlesWithSources.map(title => `
-                <div class="result-item">
+                <div class="result-item ${title.sources && title.sources.length > 0 ? '' : 'unavailable'}">
                     <div class="result-title">${escapeHtml(title.name)} ${title.year ? `(${title.year})` : ''}</div>
                     <div class="result-meta">
                         <span>${title.type ? title.type.replace('_', ' ') : 'N/A'}</span>

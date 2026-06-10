@@ -1,62 +1,53 @@
 /**
  * Cloudflare Pages Function - API Proxy
- * 
- * This function proxies requests to the Watchmode API while keeping
- * the API key secure in encrypted environment variables.
- * 
- * All requests to /api/proxy/* are forwarded to api.watchmode.com
- * with the WATCHMODE_API_KEY header added.
+ * Ensures all responses are valid JSON
  */
-
-export async function onRequestGet(context) {
+export async function onRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
-  
+
   // Get the path after /api/proxy
   const path = url.pathname.replace('/api/proxy', '') + url.search;
-  
-  // Build the Watchmode API URL
   const apiUrl = `https://api.watchmode.com${path}`;
-  
+
   try {
-    // Forward to Watchmode with API key from encrypted environment variable
+    // Forward to Watchmode with API key
     const response = await fetch(apiUrl, {
       headers: {
         'X-API-Key': context.env.WATCHMODE_API_KEY
       }
     });
-    
-    // Return with CORS headers for browser requests
-    return new Response(await response.body, {
+
+    let body = await response.text();
+
+    // If response isn't JSON, wrap it
+    if (!body.trim()) {
+      body = JSON.stringify({ error: 'Empty response from API' });
+    } else if (!body.startsWith('{') && !body.startsWith('[')) {
+      body = JSON.stringify({ 
+        error: 'Non-JSON response from API', 
+        status: response.status,
+        body: body.substring(0, 200) 
+      });
+    }
+
+    return new Response(body, {
       status: response.status,
-      statusText: response.statusText,
       headers: {
-        'Content-Type': response.headers.get('Content-Type') || 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
-    });
-  } catch (error) {
-    console.error('Proxy error:', error);
-    return new Response(JSON.stringify({ error: 'Proxy request failed' }), {
-      status: 500,
-      headers: { 
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       }
     });
-  }
-}
 
-// Handle OPTIONS for CORS preflight
-export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
-  });
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      error: error.message 
+    }), {
+      status: 500,
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Access-Control-Allow-Origin': '*' 
+      }
+    });
+  }
 }

@@ -1,14 +1,15 @@
 /**
  * Cloudflare Pages Function - API Proxy
- * Ensures all responses are valid JSON
+ * Handles all /api/* requests and proxies to Watchmode
  */
 export async function onRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // Get the path after /api/proxy
-  const path = url.pathname.replace('/api/proxy', '') + url.search;
-  const apiUrl = `https://api.watchmode.com${path}`;
+  // The path after /api/ is in context.params.path
+  // For /api/proxy/v1/search, context.params.path = "proxy/v1/search"
+  const fullPath = `/${context.params.path || ''}${url.search}`;
+  const apiUrl = `https://api.watchmode.com${fullPath}`;
 
   try {
     // Get API key from environment - try common names
@@ -27,6 +28,10 @@ export async function onRequest(context) {
         apiKey_check: {
           API_KEY: context.env.API_KEY ? 'SET' : 'NOT SET',
           WATCHMODE_API_KEY: context.env.WATCHMODE_API_KEY ? 'SET' : 'NOT SET'
+        },
+        path_info: {
+          fullPath: fullPath,
+          params: context.params
         }
       }), {
         status: 500,

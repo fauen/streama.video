@@ -1,20 +1,15 @@
 /**
- * Cloudflare Pages Function - API Proxy
- * Handles /api/proxy/* requests and proxies to Watchmode
+ * Cloudflare Pages Function - API Proxy for search
+ * Handles /api/proxy/v1/search requests and proxies to Watchmode
  */
 export async function onRequestGet(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // context.params.path contains the path after /api/proxy/
-  // For /api/proxy/v1/search, context.params.path = "v1/search"
-  // For /api/proxy/v1/title/123/sources, context.params.path = "v1/title/123/sources"
-  // Prepend / to form the full Watchmode API path
-  const fullPath = `/${context.params.path}${url.search}`;
-  const apiUrl = `https://api.watchmode.com${fullPath}`;
+  // Forward to Watchmode search endpoint
+  const apiUrl = `https://api.watchmode.com/v1/search${url.search}`;
 
   try {
-    // Get API key from environment
     const apiKey = context.env.API_KEY || context.env.WATCHMODE_API_KEY;
     
     if (!apiKey) {
@@ -29,7 +24,6 @@ export async function onRequestGet(context) {
       });
     }
     
-    // Forward to Watchmode with API key
     const response = await fetch(apiUrl, {
       headers: {
         'X-API-Key': apiKey
@@ -38,7 +32,6 @@ export async function onRequestGet(context) {
 
     let body = await response.text();
 
-    // If response isn't JSON, wrap it
     if (!body.trim()) {
       body = JSON.stringify({ error: 'Empty response from API' });
     } else if (!body.startsWith('{') && !body.startsWith('[')) {
@@ -70,7 +63,6 @@ export async function onRequestGet(context) {
   }
 }
 
-// Handle OPTIONS for CORS preflight
 export async function onRequestOptions() {
   return new Response(null, {
     status: 204,

@@ -1,37 +1,23 @@
 /**
  * Cloudflare Pages Function - API Proxy
- * Proxies requests to Watchmode API with API key from environment variables
+ * Handles all /api/* requests and proxies to Watchmode
  */
 export async function onRequestGet(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // Get the path after /api/proxy
-  const path = url.pathname.replace('/api/proxy', '') + url.search;
-  const apiUrl = `https://api.watchmode.com${path}`;
+  // context.params.path contains everything after /api/
+  // For /api/proxy/v1/search, context.params.path = "proxy/v1/search"
+  const fullPath = `/${context.params.path}${url.search}`;
+  const apiUrl = `https://api.watchmode.com${fullPath}`;
 
   try {
     // Get API key from environment - try common names
     const apiKey = context.env.API_KEY || context.env.WATCHMODE_API_KEY;
     
-    // Debug: log all env vars (first 10 chars of each value)
-    const envDebug = {};
-    for (const [key, value] of Object.entries(context.env)) {
-      envDebug[key] = value ? `${value.substring(0, 10)}...` : '(empty)';
-    }
-    
     if (!apiKey) {
       return new Response(JSON.stringify({
-        error: 'API_KEY environment variable not configured in Cloudflare Pages settings',
-        env_debug: envDebug,
-        apiKey_check: {
-          API_KEY: context.env.API_KEY ? 'SET' : 'NOT SET',
-          WATCHMODE_API_KEY: context.env.WATCHMODE_API_KEY ? 'SET' : 'NOT SET'
-        },
-        path_info: {
-          path: path,
-          url: request.url
-        }
+        error: 'API_KEY environment variable not configured in Cloudflare Pages settings'
       }), {
         status: 500,
         headers: {

@@ -6,18 +6,19 @@ export async function onRequestGet(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // Get the path after /api/proxy
-  // For /api/proxy/v1/search, url.pathname = /api/proxy/v1/search
-  const path = url.pathname.replace('/api/proxy', '') + url.search;
-  const apiUrl = `https://api.watchmode.com${path}`;
+  // context.params.path contains everything after /api/proxy/
+  // For /api/proxy/v1/search, context.params.path = "v1/search"
+  // For /api/proxy/v1/title/123/sources, context.params.path = "v1/title/123/sources"
+  const fullPath = `/${context.params.path}${url.search}`;
+  const apiUrl = `https://api.watchmode.com${fullPath}`;
 
   try {
-    // Get API key from environment - try both names
+    // Get API key from environment
     const apiKey = context.env.API_KEY || context.env.WATCHMODE_API_KEY;
     
     if (!apiKey) {
       return new Response(JSON.stringify({
-        error: 'API_KEY environment variable not configured in Cloudflare Pages settings'
+        error: 'API_KEY environment variable not configured'
       }), {
         status: 500,
         headers: {

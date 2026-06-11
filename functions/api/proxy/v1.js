@@ -1,20 +1,16 @@
 /**
- * Cloudflare Pages Function - API Proxy
- * Handles /api/* requests and proxies to Watchmode
+ * Cloudflare Pages Function - API Proxy for /api/proxy/v1/*
+ * Handles all requests under /api/proxy/v1/ and proxies to Watchmode v1 API
  */
 export async function onRequestGet(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // context.params.rest contains everything after /api/
-  // For /api/proxy/v1/search, context.params.rest = "proxy/v1/search"
-  // We need to remove /proxy to get the actual Watchmode API path
-  let path = context.params.rest;
-  if (path.startsWith('proxy/')) {
-    path = path.substring('proxy/'.length);
-  }
-  const fullPath = `/${path}${url.search}`;
-  const apiUrl = `https://api.watchmode.com${fullPath}`;
+  // Get the path after /api/proxy/v1
+  // For /api/proxy/v1/search?..., the full pathname is /api/proxy/v1/search
+  // We need to extract /v1/search from it
+  const pathAfterProxy = url.pathname.replace('/api/proxy', '');
+  const apiUrl = `https://api.watchmode.com${pathAfterProxy}`;
 
   try {
     // Get API key from environment

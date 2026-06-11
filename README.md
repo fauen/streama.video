@@ -7,7 +7,8 @@ Website to check which streaming providers has a certain movie/show in a specifi
 - Search for movies and TV shows by name
 - View which streaming services have the title available
 - Filter by country (Sweden, United Kingdom, United States)
-- See service type (Subscription, Purchase, Free, TV Channel) with color-coded badges
+- See service type (Subscription, Rent, Buy, Free, TV Channel) with color-coded badges
+- Each service appears only once per type (no duplicates for SD/HD/4K formats)
 
 ## How It Works
 
@@ -92,6 +93,20 @@ If you need to call additional Watchmode API endpoints:
 1. Create a new function file in `functions/api/proxy/v1/` matching the URL structure
 2. Follow the same pattern as existing functions
 3. See `DEVELOPMENT.md` for detailed instructions
+
+## Service Types
+
+The site displays streaming availability with color-coded badges:
+
+| Type | Color | Description |
+|------|-------|-------------|
+| Subscription | Green | Monthly/annual streaming subscription |
+| Rent | Yellow | Temporary rental (limited time access) |
+| Buy | Red | Permanent purchase to own/download |
+| Free | Blue | Free with ads or no cost |
+| TV Channel | Purple | Live TV channel |
+
+**Note:** "Purchase" and "Buy" are consolidated into a single "Buy" type for consistency.
 
 ## API Reference
 

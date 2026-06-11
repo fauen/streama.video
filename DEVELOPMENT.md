@@ -59,6 +59,54 @@ Required in Cloudflare Pages dashboard settings:
 
 These are **automatically available** to Pages Functions via `context.env.WATCHMODE_API_KEY`.
 
+## Data Processing
+
+### Type Normalization
+
+The Watchmode API may return different type names for similar concepts. We normalize these in `getSourcesForTitle()`:
+- `purchase` → `buy` (consolidated to avoid confusion)
+
+This ensures consistent display in the UI with the following service types:
+- **sub** (Subscription) - Green
+- **rent** (Rent) - Yellow  
+- **buy** (Buy/Purchase) - Red
+- **free** (Free) - Blue
+- **tve** (TV Channel) - Purple
+
+### Deduplication
+
+Watchmode API often returns multiple entries for the same service with different formats (SD, HD, 4K). Example:
+```json
+{
+  "name": "Amazon",
+  "type": "rent",
+  "format": "SD"
+},
+{
+  "name": "Amazon", 
+  "type": "rent",
+  "format": "HD"
+},
+{
+  "name": "Amazon",
+  "type": "rent", 
+  "format": "4K"
+}
+```
+
+We deduplicate in `getSourcesForTitle()` by filtering on `name + type` combination:
+```javascript
+const seen = new Set();
+return data.filter(source => {
+    const key = `${source.name.toLowerCase()}-${source.type}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+});
+```
+
+This ensures each service appears only once per type in the results.
+
 ## Adding New API Endpoints
 
 If you need to add a new Watchmode API endpoint:

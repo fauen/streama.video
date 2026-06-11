@@ -11,10 +11,26 @@ export async function onRequest(context) {
   const apiUrl = `https://api.watchmode.com${path}`;
 
   try {
+    // Get API key from environment - try common names
+    const apiKey = context.env.API_KEY || context.env.WATCHMODE_API_KEY;
+    
+    if (!apiKey) {
+      return new Response(JSON.stringify({
+        error: 'API_KEY environment variable not configured',
+        available_vars: Object.keys(context.env)
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
     // Forward to Watchmode with API key
     const response = await fetch(apiUrl, {
       headers: {
-        'X-API-Key': context.env.WATCHMODE_API_KEY
+        'X-API-Key': apiKey
       }
     });
 

@@ -14,10 +14,20 @@ export async function onRequest(context) {
     // Get API key from environment - try common names
     const apiKey = context.env.API_KEY || context.env.WATCHMODE_API_KEY;
     
+    // Debug: log all env vars (first 10 chars of each value)
+    const envDebug = {};
+    for (const [key, value] of Object.entries(context.env)) {
+      envDebug[key] = value ? `${value.substring(0, 10)}...` : '(empty)';
+    }
+    
     if (!apiKey) {
       return new Response(JSON.stringify({
-        error: 'API_KEY environment variable not configured',
-        available_vars: Object.keys(context.env)
+        error: 'API_KEY environment variable not configured in Cloudflare Pages settings',
+        env_debug: envDebug,
+        apiKey_check: {
+          API_KEY: context.env.API_KEY ? 'SET' : 'NOT SET',
+          WATCHMODE_API_KEY: context.env.WATCHMODE_API_KEY ? 'SET' : 'NOT SET'
+        }
       }), {
         status: 500,
         headers: {

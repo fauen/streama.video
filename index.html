@@ -342,7 +342,16 @@
                 
                 const data = await response.json();
                 // Normalize type names: consolidate 'purchase' into 'buy'
-                return data.map(source => ({
+                // Deduplicate: remove duplicate services (same name + type combinations)
+                const seen = new Set();
+                return data.filter(source => {
+                    const key = `${source.name.toLowerCase()}-${source.type}`;
+                    if (seen.has(key)) {
+                        return false;
+                    }
+                    seen.add(key);
+                    return true;
+                }).map(source => ({
                     ...source,
                     type: source.type === 'purchase' ? 'buy' : source.type
                 })) || [];

@@ -8,7 +8,12 @@ export async function onRequestGet(context) {
 
   // context.params.path contains everything after /api/
   // For /api/proxy/v1/search, context.params.path = "proxy/v1/search"
-  const fullPath = `/${context.params.path}${url.search}`;
+  // We need to remove /proxy to get the actual Watchmode API path
+  let path = context.params.path;
+  if (path.startsWith('proxy/')) {
+    path = path.substring('proxy/'.length);
+  }
+  const fullPath = `/${path}${url.search}`;
   const apiUrl = `https://api.watchmode.com${fullPath}`;
 
   try {

@@ -1,15 +1,14 @@
 /**
  * Cloudflare Pages Function - API Proxy
- * Handles all /api/* requests and proxies to Watchmode
+ * Proxies requests to Watchmode API with API key from environment variables
  */
-export async function onRequest(context) {
+export async function onRequestGet(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // The path after /api/ is in context.params.path
-  // For /api/proxy/v1/search, context.params.path = "proxy/v1/search"
-  const fullPath = `/${context.params.path || ''}${url.search}`;
-  const apiUrl = `https://api.watchmode.com${fullPath}`;
+  // Get the path after /api/proxy
+  const path = url.pathname.replace('/api/proxy', '') + url.search;
+  const apiUrl = `https://api.watchmode.com${path}`;
 
   try {
     // Get API key from environment - try common names
@@ -30,8 +29,8 @@ export async function onRequest(context) {
           WATCHMODE_API_KEY: context.env.WATCHMODE_API_KEY ? 'SET' : 'NOT SET'
         },
         path_info: {
-          fullPath: fullPath,
-          params: context.params
+          path: path,
+          url: request.url
         }
       }), {
         status: 500,
@@ -81,4 +80,16 @@ export async function onRequest(context) {
       }
     });
   }
+}
+
+// Handle OPTIONS for CORS preflight
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  });
 }

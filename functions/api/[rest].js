@@ -1,15 +1,15 @@
 /**
  * Cloudflare Pages Function - API Proxy
- * Handles all /api/* requests and proxies to Watchmode
+ * Handles /api/* requests and proxies to Watchmode
  */
 export async function onRequestGet(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // context.params.path contains everything after /api/
-  // For /api/proxy/v1/search, context.params.path = "proxy/v1/search"
+  // context.params.rest contains everything after /api/
+  // For /api/proxy/v1/search, context.params.rest = "proxy/v1/search"
   // We need to remove /proxy to get the actual Watchmode API path
-  let path = context.params.path;
+  let path = context.params.rest;
   if (path.startsWith('proxy/')) {
     path = path.substring('proxy/'.length);
   }
@@ -17,12 +17,12 @@ export async function onRequestGet(context) {
   const apiUrl = `https://api.watchmode.com${fullPath}`;
 
   try {
-    // Get API key from environment - try common names
+    // Get API key from environment
     const apiKey = context.env.API_KEY || context.env.WATCHMODE_API_KEY;
     
     if (!apiKey) {
       return new Response(JSON.stringify({
-        error: 'API_KEY environment variable not configured in Cloudflare Pages settings'
+        error: 'API_KEY environment variable not configured'
       }), {
         status: 500,
         headers: {

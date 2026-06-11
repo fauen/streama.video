@@ -1,16 +1,16 @@
 /**
  * Cloudflare Pages Function - API Proxy
- * Handles /api/proxy/* requests and proxies to Watchmode
+ * Handles /api/proxy/v1/* requests and proxies to Watchmode v1 API
  */
 export async function onRequestGet(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // context.params.path contains the path after /api/proxy/
-  // For /api/proxy/v1/search, context.params.path = "v1/search"
-  // For /api/proxy/v1/title/123/sources, context.params.path = "v1/title/123/sources"
-  // Prepend / to form the full Watchmode API path
-  const fullPath = `/${context.params.path}${url.search}`;
+  // context.params.path contains the path after /api/proxy/v1/
+  // For /api/proxy/v1/search, context.params.path = "search"
+  // For /api/proxy/v1/title/123/sources, context.params.path = "title/123/sources" (if it captures all)
+  // We need to prepend /v1/ to form the full Watchmode API path
+  const fullPath = `/v1/${context.params.path}${url.search}`;
   const apiUrl = `https://api.watchmode.com${fullPath}`;
 
   try {

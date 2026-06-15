@@ -192,6 +192,12 @@ curl -X GET "https://YOUR-SITE.pages.dev/api/proxy/v1/title/1374504/sources?regi
 
 ## Git Practices
 
+**Workflow**: Always work in feature branches, not directly on main.
+- Before starting work, **ask** the user: "What branch should I create for this?"
+- Create branch: `git checkout -b feature/your-feature`
+- Push freely to feature branches (no confirmation needed)
+- Merge to main when complete: `git checkout main && git merge feature/your-feature`
+
 - Prefer atomic commits with clear messages
 - Reference issue numbers if applicable
 - Include both added and modified files in single commit for a feature

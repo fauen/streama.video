@@ -214,3 +214,11 @@ You do **not** need to approve each tool call. I am authorized to run:
 - All other standard tools
 
 **No permission prompts needed** for read-only exploration or standard development operations.
+
+## Research & External Information
+
+When using `web_search` or `web_fetch`:
+- **Prioritize official documentation** over blogs, Stack Overflow, or third-party tutorials
+- Prefer: Cloudflare docs, Watchmode API docs, MDN, official language/framework docs
+- Cross-reference multiple official sources when possible
+- Note the source in responses so it can be verified

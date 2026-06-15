@@ -92,7 +92,7 @@ If you need to call additional Watchmode API endpoints:
 
 1. Create a new function file in `functions/api/proxy/v1/` matching the URL structure
 2. Follow the same pattern as existing functions
-3. See `DEVELOPMENT.md` for detailed instructions
+3. See `CONTRIBUTING.md` for detailed instructions
 
 ## Service Types
 

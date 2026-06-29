@@ -62,7 +62,7 @@
             gap: 1rem;
         }
 
-        input[type="text"], select {
+        input[type="text"] {
             padding: 0.75rem 1rem;
             border-radius: 4px;
             border: 1px solid var(--border);
@@ -73,7 +73,7 @@
             min-width: 0;
         }
 
-        input[type="text"]:focus, select:focus {
+        input[type="text"]:focus {
             outline: none;
             border-color: var(--blue);
         }
@@ -234,12 +234,6 @@
                     placeholder="Search for a movie or TV show..."
                     autocomplete="off"
                 >
-                <select id="countrySelect">
-                    <option value="">Select Country</option>
-                    <option value="SE">Sweden</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="US">United States</option>
-                </select>
             </div>
             <button onclick="search()">Search</button>
         </div>
@@ -263,15 +257,10 @@
         
         async function search() {
             const query = document.getElementById('searchInput').value.trim();
-            const country = document.getElementById('countrySelect').value;
+            const country = 'SE';
             
             if (!query) {
                 showError('Please enter a search term');
-                return;
-            }
-            
-            if (!country) {
-                showError('Please select a country');
                 return;
             }
             
@@ -363,7 +352,7 @@
         
         function renderSources(sources, country) {
             if (!sources || sources.length === 0) {
-                return '<div class="sources"><span class="empty" style="font-size: 0.875rem;">Not available in selected country</span></div>';
+                return '<div class="sources"><span class="empty" style="font-size: 0.875rem;">Not available in Sweden</span></div>';
             }
             
             return `
